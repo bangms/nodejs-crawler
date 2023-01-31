@@ -15,6 +15,8 @@ records.forEach((r, i) => {
 // 엑셀을 파싱하는게 힘들기 때문에  xslx 패키지 설치
 
 const xlsx = require('xlsx');
+const axios = require('axios'); // ajax 라이브러리
+const cheerio = require('cheerio'); // html 파싱
 
 const workbook = xlsx.readFile('xlsx/data.xlsx');
 
@@ -31,12 +33,31 @@ console.log(records);
 // 크롤링 할 때도 비동기를 조심하면서 해야 함 두가지의 차이가 극명함 
 // 비동기를 자유자재로 다룰 수 있어야 크롤링 된 데이터들을 한번에 모아서 저장할 수 있는데 그 부분을 유의하기 
 
-records.forEach((r, i) => {
-    console.log(r.제목, r.링크)
-})
+// records.forEach((r, i) => {
+//     console.log(r.제목, r.링크)
+// })
 
 // 배열.entries()를 쓰면 내부 배열이 [인덱스, 값] 모양 이터레이터로 바뀜
 // 2차원 배열로 변환해서 비구조화 할당을 해서 사용
 for (const [i, r] of records.entries()) {
     console.log(i, r.제목, r.링크);
 }
+
+// axios cheerio 조합
+
+const crawler = async () => { // await 쓰기 위해 async 사용
+    await Promise.all(records.map(async (r) => {
+        const response = await axios.get(r.링크); // 가져오는 요청을 보냄 axios.get
+        if (response.status === 200) { // 응답이 성공했을 경우
+            const html = response.data;
+            // console.log(html); // html 코드를 가져오기
+            const $ = cheerio.load(html); // html 문자열이 cheerio에 로딩됨 -> $ 를 통해서 html 태그에 접근할 수 있음
+            const text = $('.score.score_left .star_score').text();
+
+            console.log(r.제목, '평점', text.trim()); // trim으로 공백문자열 지우기
+        }
+    }));
+
+}
+
+crawler();
