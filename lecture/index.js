@@ -46,18 +46,43 @@ for (const [i, r] of records.entries()) {
 // axios cheerio 조합
 
 const crawler = async () => { // await 쓰기 위해 async 사용
-    await Promise.all(records.map(async (r) => {
-        const response = await axios.get(r.링크); // 가져오는 요청을 보냄 axios.get
-        if (response.status === 200) { // 응답이 성공했을 경우
-            const html = response.data;
-            // console.log(html); // html 코드를 가져오기
-            const $ = cheerio.load(html); // html 문자열이 cheerio에 로딩됨 -> $ 를 통해서 html 태그에 접근할 수 있음
-            const text = $('.score.score_left .star_score').text();
-
-            console.log(r.제목, '평점', text.trim()); // trim으로 공백문자열 지우기
+    // await Promise.all(records.map(async (r) => {
+        for (const [i, r] of records.entries()) {
+        
+            const response = await axios.get(r.링크); // 가져오는 요청을 보냄 axios.get
+            if (response.status === 200) { // 응답이 성공했을 경우
+                const html = response.data;
+                // console.log(html); // html 코드를 가져오기
+                const $ = cheerio.load(html); // html 문자열이 cheerio에 로딩됨 -> $ 를 통해서 html 태그에 접근할 수 있음
+                const text = $('.score.score_left .star_score').text();
+                
+                console.log(r.제목, '평점', text.trim()); // trim으로 공백문자열 지우기
+            }
         }
-    }));
+    // }));
+    /*
+    엑셀에 적힌 순서
+        0 타이타닉 https://movie.naver.com/movie/bi/mi/basic.nhn?code=18847
+        1 아바타 https://movie.naver.com/movie/bi/mi/basic.nhn?code=62266
+        2 매트릭스 https://movie.naver.com/movie/bi/mi/basic.nhn?code=24452
+        ...
 
+    평점 크롤링 해 온 순서 
+        캐리비안의 해적 평점 9.07
+        반지의 제왕 평점 9.31
+        아바타 평점 9.08
+        ...
+
+    크롤링을 순서대로 돌릴 수도 있고 빠르게 돌리기 위해 동시에 모든 페이지에 요청을 보내 응답을 받을 수도 있음
+    하지만 응답 순서가 요청을 보낸 순서가 되지 않을 수도 있음
+    ** Promise.all은 동시에 진행되지만 순서가 보장되지 않음
+    만약에 엑셀 순서대로 적고싶다하면 코드가 좀 달라져야 함
+    forEach 가 Promise.all이라고 보면 됨 (map 부분)
+    결과의 순서를 보장하고 싶을 경우 for of 문과 await를 같이 쓰면 됨
+        for (const [i, r] of records.entries()) {
+        
+        }
+    */
 }
 
 crawler();
