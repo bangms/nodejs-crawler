@@ -15,6 +15,12 @@ const records = parse(csv.toString('utf-8')); // csv-parse의 parse 메서드가
 
 const crawler = async () => { 
     const browser = await puppeteer.launch({ headless: false }); // puppeteer 명령어는 전부 비동기 작업이기 때문에 await 사용
+    // headless 화면이 없는 브라우저 기본값 true. 
+    // 크롤러는 보통 서버에게 일정주기로 정보 가져오라는 명령을 보냄 
+    // 서버에서 돌아가는 크롬 브라우저도 눈으로 볼 수 없어서 코드로 조정을 하는 것인데 개발모드일 때만 
+    // 눈으로 보고 제대로 동작하는지 확인하기 위해서 headless 옵션을 false로 바꿔서 사용
+    // 실제 서버에서는 화면을 볼 필요가 없기 때문에 true로 바꾸거나 옵션값 없이 launch() 만 사용
+    // 실무에서는 { headless: process.env.NODE_ENV === 'production' } 배포 환경에서만 true로 사용 
     const page = await browser.newPage();
     const page2 = await browser.newPage();
     await page.goto('https://www.naver.com/');
