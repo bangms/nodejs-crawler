@@ -1,5 +1,5 @@
 const parse = require('csv-parse/lib/sync');
-const { compareDocumentPosition } = require('domutils');
+const stringify = require('csv-stringify/lib/sync');
 const fs = require('fs'); 
 /*
     puppeteer
@@ -10,7 +10,6 @@ const fs = require('fs');
 
 */
 const puppeteer = require('puppeteer');
-
 const csv = fs.readFileSync('csv/data.csv'); // readFileSync 파일을 읽어들이는 메서드
 const records = parse(csv.toString('utf-8')); // csv-parse의 parse 메서드가 문자열을 2차원 배열로 바꿈
 
@@ -18,6 +17,7 @@ const crawler = async () => {
     // UnhandledPromiseRejectionWarning Error: Page crashed!
     // promise가 에러가 나는 경우를 잡아야 하기 때문에 try catch문 사용
     try {
+        const result = [];
         const browser = await puppeteer.launch({ headless: false });
         await Promise.all(records.map(async (r, i) => {
             try {
@@ -26,7 +26,11 @@ const crawler = async () => {
                 const scoreEl = await page.$('.score.score_left .star_score'); // 띄워진 페이지에서 해당 태그 찾기
                 if (scoreEl) { // 크롤러가 에러가 생겨서 태그를 못찾는 경우가 발생할 수 있음(정확히는 태그 핸들러라서 태그 속성을 그대로 사용할 수 없음)
                     const text = await page.evaluate(tag => tag.textContent, scoreEl);
-                    console.log(r[0], '평점', text.trim());
+                    console.log(r[0], '평점', text.trim());  // 2차원 배열 생성
+                    // result.push([r[0], r[1], text.trim()]);
+                    // 원본 순서대로 들어오는게 아니라 로딩 순서대로 들어옴 -> 원본 순서대로 입력하기 위해서 i를 사용해서 순서대로 넣어줄 수 있음
+                    // 속도도 지키면서 순서대로 들어오는 방법 - 결과 값을 넣어줄 때 index를 체크해서 순서를 맞추기
+                    result[i] =[r[0], r[1], text.trim()];
                 } 
                 await page.waitForTimeout(3000);
                 await page.close();
@@ -35,6 +39,8 @@ const crawler = async () => {
             }
         }));
         await browser.close();
+        const str = stringify(result);
+        fs.writeFileSync('csv/result.csv', str);
         // 생성한 페이지와 브라우저는 반드시 close() 하는 것이 메모리에 좋음 
     } catch (e) {
         console.error(e);
